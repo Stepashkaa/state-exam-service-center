@@ -20,9 +20,6 @@ public class ClientUpdateDto {
     @Email(message = "Некорректный email")
     private String email;
 
-    @NotNull(message = "Статус клиента обязателен")
-    private ClientStatus status;
-
     @NotNull(message = "Уровень обслуживания обязателен")
     private ServiceLevel serviceLevel;
 

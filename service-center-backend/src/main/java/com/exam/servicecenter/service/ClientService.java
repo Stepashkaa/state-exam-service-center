@@ -7,6 +7,7 @@ import com.exam.servicecenter.dto.ReportResponseDto;
 import com.exam.servicecenter.entity.ClientEntity;
 import com.exam.servicecenter.enums.ClientStatus;
 import com.exam.servicecenter.enums.ServiceLevel;
+import com.exam.servicecenter.mapper.ClientMapper;
 import com.exam.servicecenter.repository.ClientRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 public class ClientService {
 
     private final ClientRepository clientRepository;
+    private final ClientMapper clientMapper;
 
     public List<ClientResponseDto> findAll(
             String search,
@@ -38,45 +40,35 @@ public class ClientService {
                         hasIssuedItem
                 )
                 .stream()
-                .map(this::toResponseDto)
+                .map(clientMapper::toResponseDto)
                 .toList();
     }
 
     public ClientResponseDto findById(Long id) {
-        return toResponseDto(getClientOrThrow(id));
+        ClientEntity client = getClientOrThrow(id);
+        return clientMapper.toResponseDto(client);
     }
 
     public ClientResponseDto create(ClientCreateDto dto) {
-        ClientEntity client = ClientEntity.builder()
-                .fullName(dto.getFullName())
-                .phone(dto.getPhone())
-                .email(dto.getEmail())
-                .status(ClientStatus.ACTIVE)
-                .serviceLevel(dto.getServiceLevel())
-                .issuedItem(dto.getIssuedItem())
-                .responsibleEmployee(dto.getResponsibleEmployee())
-                .serviceStartDate(dto.getServiceStartDate() != null ? dto.getServiceStartDate() : LocalDate.now())
-                .serviceEndDate(dto.getServiceEndDate())
-                .build();
+        ClientEntity client = clientMapper.toEntity(dto);
 
-        return toResponseDto(clientRepository.save(client));
+        client.setStatus(ClientStatus.ACTIVE);
+
+        if (client.getServiceStartDate() == null) {
+            client.setServiceStartDate(LocalDate.now());
+        }
+
+        ClientEntity savedClient = clientRepository.save(client);
+        return clientMapper.toResponseDto(savedClient);
     }
 
     public ClientResponseDto update(Long id, ClientUpdateDto dto) {
         ClientEntity client = getClientOrThrow(id);
 
-        client.setFullName(dto.getFullName());
-        client.setPhone(dto.getPhone());
-        client.setEmail(dto.getEmail());
-        client.setStatus(dto.getStatus());
-        client.setServiceLevel(dto.getServiceLevel());
-        client.setIssuedItem(dto.getIssuedItem());
-        client.setResponsibleEmployee(dto.getResponsibleEmployee());
-        client.setServiceStartDate(dto.getServiceStartDate());
-        client.setServiceEndDate(dto.getServiceEndDate());
-        client.setTerminationReason(dto.getTerminationReason());
+        clientMapper.updateEntity(client, dto);
 
-        return toResponseDto(clientRepository.save(client));
+        ClientEntity savedClient = clientRepository.save(client);
+        return clientMapper.toResponseDto(savedClient);
     }
 
     public void delete(Long id) {
@@ -91,7 +83,8 @@ public class ClientService {
         client.setTerminationReason(reason);
         client.setServiceEndDate(LocalDate.now());
 
-        return toResponseDto(clientRepository.save(client));
+        ClientEntity savedClient = clientRepository.save(client);
+        return clientMapper.toResponseDto(savedClient);
     }
 
     public ClientResponseDto assignEmployee(Long id, String employeeName) {
@@ -99,7 +92,8 @@ public class ClientService {
 
         client.setResponsibleEmployee(employeeName);
 
-        return toResponseDto(clientRepository.save(client));
+        ClientEntity savedClient = clientRepository.save(client);
+        return clientMapper.toResponseDto(savedClient);
     }
 
     public ClientResponseDto issueItem(Long id, String issuedItem) {
@@ -107,7 +101,8 @@ public class ClientService {
 
         client.setIssuedItem(issuedItem);
 
-        return toResponseDto(clientRepository.save(client));
+        ClientEntity savedClient = clientRepository.save(client);
+        return clientMapper.toResponseDto(savedClient);
     }
 
     public ClientResponseDto extendService(Long id, LocalDate newEndDate) {
@@ -115,7 +110,8 @@ public class ClientService {
 
         client.setServiceEndDate(newEndDate);
 
-        return toResponseDto(clientRepository.save(client));
+        ClientEntity savedClient = clientRepository.save(client);
+        return clientMapper.toResponseDto(savedClient);
     }
 
     public ClientResponseDto changeLevel(Long id, ServiceLevel serviceLevel) {
@@ -123,7 +119,8 @@ public class ClientService {
 
         client.setServiceLevel(serviceLevel);
 
-        return toResponseDto(clientRepository.save(client));
+        ClientEntity savedClient = clientRepository.save(client);
+        return clientMapper.toResponseDto(savedClient);
     }
 
     public ReportResponseDto getReport() {
@@ -165,23 +162,5 @@ public class ClientService {
     private ClientEntity getClientOrThrow(Long id) {
         return clientRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Клиент с id " + id + " не найден"));
-    }
-
-    private ClientResponseDto toResponseDto(ClientEntity client) {
-        return ClientResponseDto.builder()
-                .id(client.getId())
-                .fullName(client.getFullName())
-                .phone(client.getPhone())
-                .email(client.getEmail())
-                .status(client.getStatus())
-                .serviceLevel(client.getServiceLevel())
-                .issuedItem(client.getIssuedItem())
-                .responsibleEmployee(client.getResponsibleEmployee())
-                .serviceStartDate(client.getServiceStartDate())
-                .serviceEndDate(client.getServiceEndDate())
-                .terminationReason(client.getTerminationReason())
-                .createdAt(client.getCreatedAt())
-                .updatedAt(client.getUpdatedAt())
-                .build();
     }
 }
