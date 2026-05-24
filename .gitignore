@@ -1,0 +1,26 @@
+@'
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Backend
+service-center-backend/target/
+service-center-backend/.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Logs
+*.log
+
+# Environment
+.env
+*.env
+
+# OS
+.DS_Store
+Thumbs.db
+'@ | Set-Content .gitignore -Encoding UTF8
